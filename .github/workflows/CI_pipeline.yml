@@ -34,3 +34,4 @@ jobs:
 
     - name: Upload sample data to DBFS
       run: databricks fs cp sample_sales.csv dbfs:/FileStore/sample_sales.csv --overwrite
+      
