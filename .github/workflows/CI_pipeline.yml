@@ -28,7 +28,7 @@ jobs:
     - name: Configure Databricks CLI
       run: |
         echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" >> $GITHUB_ENV
-        echo "DATABRICKS_SECRET=${{ secrets.DATABRICKS_SECRET }}" >> $GITHUB_ENV
+        echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> $GITHUB_ENV
 
     - name: Upload sample data to DBFS
       run: databricks fs cp sample_sales.csv dbfs:/FileStore/sample_sales.csv --overwrite
