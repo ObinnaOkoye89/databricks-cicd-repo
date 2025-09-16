@@ -1,0 +1,54 @@
+name: CD Pipeline for Azure Databricks
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Databricks CLI
+      run: pip install databricks-cli
+
+    # Add pre-check for secrets
+    - name: Validate Databricks secrets
+      run: |
+        if [ -z "${{ secrets.DATABRICKS_HOST }}" || [ -z "${{ secrets.DATABRICKS_TOKEN }}" ]; then
+          echo "\U0000274C DATABRICKS_HOST or DATABRICKS_TOKEN secret is missing!"
+          exit 1
+        else
+          echo "\U00002705 Secrets are set"
+        fi
+
+    # Export secrets to all next steps
+    - name: Set environment variables
+      run: |
+        echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" >> $GITHUB_ENV
+        echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> $GITHUB_ENV
+
+    - name: Configure Databricks CLI
+      run: |
+        databricks configure --token <<EOF
+        $DATABRICKS_HOST
+        $DATABRICKS_TOKEN
+        EOF
+
+    - name: Import Notebook to Workspace
+      run: databricks workspace import sample_sales_notebook.py /Workspace/Users/clmw953@leeds.ac.uk/github-actions-cicd -l python --overwrite
+
+    - name: Run Databricks Job
+      run: |
+        databricks job create --json-file job-config.json
+        databricks jobs run-now --job-id $(databricks jobs list | grep -m 1 'CD pipeline' | awk '{print $1}')
+           
